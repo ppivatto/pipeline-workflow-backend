@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  name      String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  accounts  Account[]
+  cases     Case[]
+}
+
+model Account {
+  id                  String   @id @default(uuid())
+  name                String
+  ramo                String
+  subramo             String
+  etapa               String   @default("ALTA")
+  fechaInicioVigencia DateTime
+  primaObjetivo       Float
+  createdBy           String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  identifier          String?
+  industry            String?
+  creator             User?    @relation(fields: [createdBy], references: [id])
+  cases               Case[]
+}
+
+model Case {
+  id              String           @id @default(uuid())
+  refnum          String           @unique
+  accountId       String
+  workflowStep    WorkflowStep     @default(ALTA)
+  status          String           @default("ACTIVO")
+  assignedTo      String
+  lastModified    DateTime         @default(now()) @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  data            Json?
+  ramo            String?
+  account         Account          @relation(fields: [accountId], references: [id])
+  assignee        User             @relation(fields: [assignedTo], references: [id])
+  emissionData    EmissionData?
+  negotiationData NegotiationData?
+  parentCaseId    String?
+  parentCase      Case?            @relation("CaseHistory", fields: [parentCaseId], references: [id])
+  childCases      Case[]           @relation("CaseHistory")
+}
+
+model NegotiationData {
+  caseId                   String  @id
+  seQuedo                  Boolean @default(false)
+  estatus                  String?
+  poblacionAsegurada       Int?
+  primaAsegurados          Float?
+  motivoNoGanado           String?
+  aseguradoraGanadora      String?
+  primaCompetencia         Float?
+  cuidadoIntegralPoblacion Int?
+  cuidadoIntegralPrima     Float?
+  observaciones            String?
+  case                     Case    @relation(fields: [caseId], references: [id])
+}
+
+model EmissionData {
+  caseId            String    @id
+  fechaIngresoFolio DateTime?
+  fechaEmision      DateTime?
+  numPolizas        Int?
+  poliza            String?
+  poblacionEmitida  Int?
+  observaciones     String?
+  case              Case      @relation(fields: [caseId], references: [id])
+}
+
+enum WorkflowStep {
+  ALTA
+  NEGOCIACION
+  EMISION
+  TERMINADO
+}
