@@ -10,15 +10,17 @@ export class AccountsService {
       const account = await tx.account.create({
         data: {
           name: data.name,
-          identifier: data.identifier,
-          industry: data.industry,
+          identifier: data.identifier || `ACC-${Date.now()}`,
+          industry: data.giroNegocio || data.industry,
           ramo: data.ramo,
           subramo: data.subramo,
-          fechaInicioVigencia: new Date(data.fechaInicioVigencia),
-          primaObjetivo: parseFloat(data.primaObjetivo),
+          fechaInicioVigencia: data.fechaInicioVigencia ? new Date(data.fechaInicioVigencia) : new Date(),
+          primaObjetivo: parseFloat(data.primaObjetivo) || 0,
           createdBy: userId,
         },
       });
+
+      const { name, identifier, industry, ramo, subramo, fechaInicioVigencia, primaObjetivo, ...caseData } = data;
 
       const caseRecord = await tx.case.create({
         data: {
@@ -26,6 +28,9 @@ export class AccountsService {
           accountId: account.id,
           workflowStep: 'ALTA',
           assignedTo: userId,
+          ramo: ramo,
+          parentCaseId: data.parentCaseId,
+          data: caseData,
         },
       });
 
