@@ -21,14 +21,16 @@ export class CasesService {
   }
 
   async getRenovaciones(userId: string, accountId?: string) {
+    // If accountId is empty string or "undefined", treat it as undefined
+    const accId = (accountId === '' || accountId === 'undefined') ? undefined : accountId;
+
     return this.prisma.case.findMany({
       where: {
         assignedTo: userId,
-        accountId: accountId,
+        accountId: accId,
         workflowStep: {
           in: ['TERMINADO', 'EMISION']
         },
-        // status: 'TERMINADO' // Status might be confusing, workflowStep is safer given the enum
       },
       include: {
         account: true,
@@ -94,9 +96,10 @@ export class CasesService {
   }
 
   async findAll(userId: string, accountId?: string) {
+    const accId = (accountId === '' || accountId === 'undefined') ? undefined : accountId;
     return this.prisma.case.findMany({
       where: {
-        accountId: accountId,
+        accountId: accId,
       },
       include: { account: true }
     });
