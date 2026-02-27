@@ -1,0 +1,475 @@
+“014consultafoliocuentaspipeline” (Se adjunta) 
+
+SCRIPTS 
+
+“014consultafoliocuentaspipeline” (Se adjunta) 
+
+var response = api.load("API_BEAWARE") 
+
+        .GET(`/v11/cuenta/get/?filtrobuscar=PIPE0&pagina=1&cantidad=1000`) 
+
+        .bearer(authtoken) 
+
+        .call(); 
+
+ 
+
+var complemento = "0000000000"; 
+
+var longitudfolio = ""+response.pagination.size; 
+
+var a = complemento.slice(0,(10-longitudfolio.length)); 
+
+var cve = "PIPE"+a; 
+
+var nuevoFolio = cve+ (response.pagination.size+1); 
+
+ 
+
+nuevoFolio; 
+
+ 
+
+“014reglasramopipe” 
+
+var valor_ramo = (value || "").toString(); 
+
+var banderaramo = null; 
+
+var banderaramo1 = null; 
+
+var banderaramo2 = null; 
+
+ 
+
+if(valor_ramo === "12"){ 
+
+    banderaramo = 1; 
+
+    banderaramo1 = 0; 
+
+    banderaramo2 = 0; 
+
+ 
+
+}else if(valor_ramo === "11"){ 
+
+    banderaramo = 0; 
+
+    banderaramo1 = 1; 
+
+    banderaramo2 = 0; 
+
+}else if(valor_ramo === "22" || valor_ramo === "14"){ 
+
+    banderaramo = 0; 
+
+    banderaramo1 = 0; 
+
+    banderaramo2 = 1; 
+
+}else{ 
+
+     banderaramo = 0; 
+
+    banderaramo1 = 0; 
+
+    banderaramo2 = 0; 
+
+} 
+
+ 
+
+ return `{ 
+
+        "valramo": "${banderaramo}", 
+
+        "valramo1": "${banderaramo1}", 
+
+        "valramo2": "${banderaramo2}" 
+
+    }`; 
+
+ 
+
+ 
+
+ 
+
+014pipelineconexionmd 
+
+var user = null; 
+
+var pass = null; 
+
+var scope = null; 
+
+ 
+
+var nombreCompleto=null; 
+
+var promotor = null; 
+
+var territorio = null; 
+
+var oficina = null; 
+
+var canal = null; 
+
+var centro = null; 
+
+ 
+
+var response = api.load("API_BEAWARE") 
+
+        .GET(`/v11/prparametrosper/get`) 
+
+        .bearer(authtoken) 
+
+        .call(); 
+
+ 
+
+for(let i=0;i<response.data.length;i++){ 
+
+ 
+
+    if(response.data[i].key == "username_014_md"){ 
+
+        user = response.data[i].value; 
+
+    }else if(response.data[i].key == "pass_014_md"){ 
+
+        pass = response.data[i].value; 
+
+    }else if(response.data[i].key == "scope_014_md"){ 
+
+        scope = response.data[i].value; 
+
+    } 
+
+     
+
+} 
+
+ 
+
+var body = "grant_type=password&username="+user+"&password="+pass+"&scope="+scope; 
+
+ 
+
+var response = api.load("AXA_API_OAUTH 
+
+ 
+
+n", body) 
+
+    .call(); 
+
+ 
+
+var claveAgente = (value || "").toString(); 
+
+ 
+
+var complemento = "00000000"; 
+
+var longitudCve = claveAgente.length; 
+
+var a = complemento.slice(0,(8-longitudCve)); 
+
+var cve = "AGT"+a; 
+
+claveAgente = cve+claveAgente; 
+
+ 
+
+if(claveAgente.length == 11){ 
+
+var bodyAgent = { 
+
+    'axaHeaderReq': { 
+
+        'ramo': 'finanzas', 
+
+        'usuario': 'MXS00000000A', 
+
+        'UUID': '9404d7c0-3e67-4518-8749-0a936ec87dce', 
+
+        'fechaHora': '2024-07-30T16:00:36-06:00', 
+
+        'sistemaId': 'salud' 
+
+    }, 
+
+    'data': { 
+
+        'claveAgente': claveAgente, 
+
+        'incluirEstructura': true, 
+
+        'incluirCamposAdicionales': true, 
+
+        'incluirDirecciones': true 
+
+    } 
+
+}; 
+
+ 
+
+var apiAgente = 
+
+    api.load("AXA_API_DETALLE_AGENT") 
+
+    .POST("/obtenerDetallesAgente",bodyAgent); 
+
+ 
+
+var authTmp = apiAgente.getHeader('Authorization'); 
+
+var authorization = authTmp+',Bearer '+response.access_token; 
+
+ 
+
+var response2 = apiAgente 
+
+    .header("Authorization", authorization) 
+
+    .call(); 
+
+ 
+
+var estructura = response2.data.estructuraOrganizacional; 
+
+ 
+
+var tipoPersona = response2.data.tipoPersona; 
+
+ 
+
+if(tipoPersona === "PERSONA MORAL"){ 
+
+    nombreCompleto = response2.data.razonSocial; 
+
+}else{ 
+
+    nombreCompleto = response2.data.nombre+' '+ response2.data.apellidoPaterno+' '+response2.data.apellidoMaterno; 
+
+} 
+
+ 
+
+canal = response2.data.canalDistribucion; 
+
+ 
+
+for (var i = 0; i < estructura.length; i++) { 
+
+    var item = estructura[i]; 
+
+     
+
+     
+
+     if (item.nivel === 'centroProduccion') { 
+
+        centro= item.razonSocial; 
+
+    } 
+
+   
+
+    if (item.nivel === 'oficina'){ 
+
+        oficina = item.razonSocial;         
+
+    } 
+
+     
+
+    if (item.nivel === 'promotor'){ 
+
+        promotor=item.razonSocial;         
+
+    } 
+
+     
+
+    if(item.nivel === 'territorio'){ 
+
+        territorio= item.razonSocial; 
+
+    } 
+
+   
+
+} 
+
+ 
+
+if (claveAgente && nombreCompleto) { 
+
+    return `{ 
+
+           
+
+            "nombreCompleto": "${nombreCompleto}", 
+
+            "promotor": "${promotor}", 
+
+            "territorio": "${territorio}", 
+
+            "oficina": "${oficina}", 
+
+            "canal": "${canal}", 
+
+            "centro": "${centro}" 
+
+           
+
+        }`; 
+
+     
+
+    } 
+
+} 
+
+ 
+
+return '{}'; 
+
+ 
+
+DEFINICIONES 
+
+ 
+
+AXA_API_OAUTH 
+
+https://servicioswebqa.axa.com.mx:9405/api/oauth2 
+
+ 
+
+ 
+
+4. Ver formulario de alta de cuentas y agregar los valores 
+
+RAMO: 	 
+
+Autos 
+
+Daños 
+
+Salud 
+
+Vida	 
+
+“Al elegir un valor se debe ejecutar el script 014reglasramopipe”	 
+
+ 
+
+TIPO EXPERIENCIA: 
+
+PROPIA 
+
+GLOBAL 
+
+ 
+
+SUBRAMO:	 
+
+Múltiple Empresarial (MEM) 
+
+L. Com Transportes 
+
+L. Com Responsabilidad Civil 
+
+L. Com Ramos Tecnicos 
+
+L. Est. Transportes 
+
+L. Est. Responsabilidad Civil 
+
+L. Est Ramos Tecnicos 
+
+Obras de Arte 
+
+Aviación 
+
+Financieras & Cyber 
+
+Property 
+
+Parametro 
+
+Otro 
+
+ 
+
+CUENTA CON CUIDA INTEGRAL: 
+
+SI 
+
+NO 
+
+ 
+
+GIRO DE NEGOCIO:     
+
+Flotillas utilitarias. 
+
+Flotillas de empleados. 
+
+Flotillas transportistas de carga propia (carga A y B). 
+
+Plan Piso y Traslado. 
+
+Flotillas Transportistas Carga Propia (carga C y D). 
+
+Flotillas Transportistas Carga Terceros (carga A y B). 
+
+Flotillas transportistas de carga terceros (carga C y D). 
+
+Otro                           
+
+ 
+
+PLAN: 
+
+Cuidado Integral Salud 
+
+Cuidado Integral Plus 
+
+ 
+
+ 
+
+TIPO PLAN MED: 
+
+Planmed Hibrido 
+
+Planmed Estandar 
+
+Planmed Esencial 
+
+Planmed Optimo 
+
+ 
+
+ETAPA: 
+
+Creado 
+
+Prospección 
+
+ 
+
+5. Datos consumo de servicio a maestro distribuidores,  
+
+El servicio (014pipelineconexionmd) busca al agente con el valor colocado en ese campo si no existe se debe mandar alerta "Agente no existe". 
+
+ 
+
+6. valores de plan y plan med deben de ir sección de la cuenta (revisar formulario Alta Cuenta) 

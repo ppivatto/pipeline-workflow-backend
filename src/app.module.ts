@@ -9,6 +9,8 @@ import { CasesModule } from './cases/cases.module';
 import { WorkflowModule } from './workflow/workflow.module';
 import { NegotiationModule } from './negotiation/negotiation.module';
 import { EmissionModule } from './emission/emission.module';
+import { AxaModule } from './axa/axa.module';
+import { CatalogsModule } from './catalogs/catalogs.module';
 
 @Module({
   imports: [
@@ -20,8 +22,11 @@ import { EmissionModule } from './emission/emission.module';
     WorkflowModule,
     NegotiationModule,
     EmissionModule,
+    AxaModule,
+    CatalogsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule { }
+

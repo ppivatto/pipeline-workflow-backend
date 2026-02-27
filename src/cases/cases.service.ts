@@ -20,6 +20,21 @@ export class CasesService {
     });
   }
 
+  async getCancelled(userId: string) {
+    return this.prisma.case.findMany({
+      where: {
+        assignedTo: userId,
+        status: { in: ['CANCELADO', 'RECHAZADO'] },
+      },
+      include: {
+        account: true,
+      },
+      orderBy: {
+        lastModified: 'desc',
+      },
+    });
+  }
+
   async getRenovaciones(userId: string, accountId?: string) {
     // If accountId is empty string or "undefined", treat it as undefined
     const accId = (accountId === '' || accountId === 'undefined') ? undefined : accountId;
@@ -95,13 +110,16 @@ export class CasesService {
     });
   }
 
-  async findAll(userId: string, accountId?: string) {
+  async findAll(userId: string, accountId?: string, status?: string, workflowStep?: string) {
     const accId = (accountId === '' || accountId === 'undefined') ? undefined : accountId;
     return this.prisma.case.findMany({
       where: {
         accountId: accId,
+        status: status ? { equals: status } : undefined,
+        workflowStep: workflowStep ? { equals: workflowStep as any } : undefined,
       },
-      include: { account: true }
+      include: { account: true },
+      orderBy: { lastModified: 'desc' },
     });
   }
 }

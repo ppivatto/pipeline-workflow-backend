@@ -8,13 +8,23 @@ export class CasesController {
   constructor(private casesService: CasesService) { }
 
   @Get()
-  async findAll(@Query('accountId') accountId: string, @Request() req: any) {
-    return this.casesService.findAll(req.user.userId, accountId);
+  async findAll(
+    @Query('accountId') accountId: string,
+    @Query('status') status: string,
+    @Query('workflowStep') workflowStep: string,
+    @Request() req: any
+  ) {
+    return this.casesService.findAll(req.user.userId, accountId, status, workflowStep);
   }
 
   @Get('seguimiento')
   async getSeguimiento(@Request() req: any) {
     return this.casesService.getSeguimiento(req.user.userId);
+  }
+
+  @Get('cancelled')
+  async getCancelled(@Request() req: any) {
+    return this.casesService.getCancelled(req.user.userId);
   }
 
   @Get('renovaciones')

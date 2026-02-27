@@ -34,6 +34,9 @@ model Account {
   industry            String?
   creator             User?    @relation(fields: [createdBy], references: [id])
   cases               Case[]
+
+  @@index([createdBy])
+  @@index([name])
 }
 
 model Case {
@@ -55,6 +58,12 @@ model Case {
   parentCaseId    String?
   parentCase      Case?            @relation("CaseHistory", fields: [parentCaseId], references: [id])
   childCases      Case[]           @relation("CaseHistory")
+
+  @@index([accountId])
+  @@index([assignedTo])
+  @@index([status])
+  @@index([workflowStep])
+  @@index([lastModified(sort: Desc)])
 }
 
 model NegotiationData {
