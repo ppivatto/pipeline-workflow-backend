@@ -11,6 +11,8 @@ import { NegotiationModule } from './negotiation/negotiation.module';
 import { EmissionModule } from './emission/emission.module';
 import { AxaModule } from './axa/axa.module';
 import { CatalogsModule } from './catalogs/catalogs.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { CatalogsModule } from './catalogs/catalogs.module';
     EmissionModule,
     AxaModule,
     CatalogsModule,
+    DashboardModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
