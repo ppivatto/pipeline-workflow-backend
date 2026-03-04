@@ -100,3 +100,10 @@ enum WorkflowStep {
   EMISION
   TERMINADO
 }
+
+model Catalog {
+  name      String   @id
+  entries   String   // JSON stringified CatalogEntry[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

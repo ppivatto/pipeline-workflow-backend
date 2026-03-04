@@ -75,14 +75,35 @@ export class CasesService {
     return c;
   }
 
+  /** US-9: Check if an open case already exists for account+ramo */
+  async checkDuplicateCase(accountId: string, ramo: string) {
+    const existing = await this.prisma.case.findFirst({
+      where: {
+        accountId,
+        ramo,
+        status: { in: ['ACTIVO'] },
+      },
+    });
+    return { exists: !!existing, refnum: existing?.refnum || null };
+  }
+
   async create(data: any, userId: string) {
     const refnum = `CAS-${Date.now()}`;
     const { accountId, ramo, parentCaseId, ...otherData } = data;
 
+    // US-9: Prevent duplicate case for same account+ramo if one is open
+    const resolvedAccountId = accountId || data.account_id;
+    if (resolvedAccountId && ramo) {
+      const dup = await this.checkDuplicateCase(resolvedAccountId, ramo);
+      if (dup.exists) {
+        throw new Error(`Ya existe un caso abierto (${dup.refnum}) para esta cuenta con ramo "${ramo}".`);
+      }
+    }
+
     return this.prisma.case.create({
       data: {
         refnum,
-        accountId: accountId || data.account_id, // Handle likely snake_case if any
+        accountId: resolvedAccountId,
         parentCaseId: parentCaseId,
         status: data.etapa === 'Ganada' ? 'TERMINADO' : (data.etapa || 'ACTIVO'),
         workflowStep: 'ALTA',
@@ -94,17 +115,22 @@ export class CasesService {
   }
 
   async update(id: string, data: any) {
-    const { accountId, ramo, ...otherData } = data;
+    const { accountId, ramo, rejectedFromNegotiation, ...otherData } = data;
 
-    // Fetch existing data to merge JSON if needed, or just overwrite/patch
-    // Prisma update for JSON is tricky if we want deep merge, but here typically we send full form state
-    // For simplicity, we'll update top level fields and replace/merge JSON data
+    // Determine status based on business rules
+    let newStatus: string | undefined = undefined;
+    if (rejectedFromNegotiation) {
+      newStatus = 'RECHAZADO';
+    } else if (data.etapa === 'Ganada') {
+      newStatus = 'TERMINADO';
+    }
 
     return this.prisma.case.update({
       where: { id },
       data: {
         ramo: ramo,
-        status: data.etapa === 'Ganada' ? 'TERMINADO' : undefined,
+        status: newStatus,
+        workflowStep: rejectedFromNegotiation ? 'NEGOCIACION' : undefined,
         data: otherData,
       },
     });

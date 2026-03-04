@@ -11,4 +11,9 @@ export class ReportsController {
   async getReportsData(@Request() req: any) {
     return this.reportsService.getReportsData(req.user.userId);
   }
+
+  @Get('raw')
+  async getAllCasesRaw() {
+    return this.reportsService.getAllCasesRaw();
+  }
 }

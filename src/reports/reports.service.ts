@@ -6,20 +6,21 @@ export class ReportsService {
   constructor(private prisma: PrismaService) { }
 
   async getReportsData(userId: string) {
-    // Reporte de Producción: Suma de primaObjetivo de cuentas activas (o casos emitidos)
-    const accounts = await this.prisma.account.findMany({
-      where: {
-        OR: [{ createdBy: userId }, { createdBy: null }],
-      },
-      select: { primaObjetivo: true },
-    });
-    const totalPrimaObjetivo = accounts.reduce((acc, a) => acc + (a.primaObjetivo || 0), 0);
+    // Run both queries in parallel
+    const [accounts, cases] = await Promise.all([
+      this.prisma.account.findMany({
+        where: {
+          OR: [{ createdBy: userId }, { createdBy: null }],
+        },
+        select: { primaObjetivo: true },
+      }),
+      this.prisma.case.findMany({
+        where: { assignedTo: userId },
+        select: { status: true, workflowStep: true, ramo: true, updatedAt: true },
+      }),
+    ]);
 
-    // Distribución por etapa y estados
-    const cases = await this.prisma.case.findMany({
-      where: { assignedTo: userId },
-      select: { status: true, workflowStep: true, ramo: true, updatedAt: true },
-    });
+    const totalPrimaObjetivo = accounts.reduce((acc, a) => acc + (a.primaObjetivo || 0), 0);
 
     const activeCases = cases.filter(c => !['CERRADO', 'TERMINADO', 'CANCELADO', 'RECHAZADO'].includes(c.status));
     const closedCases = cases.filter(c => ['CERRADO', 'TERMINADO'].includes(c.status));
@@ -39,5 +40,17 @@ export class ReportsService {
       totalCases: cases.length,
       ramoDistribution: Object.entries(ramoDistribution).map(([name, value]) => ({ name, value })),
     };
+  }
+
+  /** US-12: Raw report - all cases with full data for consulta de folios */
+  async getAllCasesRaw() {
+    return this.prisma.case.findMany({
+      include: {
+        account: { select: { id: true, name: true, identifier: true, ramo: true, primaObjetivo: true } },
+        negotiationData: true,
+        emissionData: true,
+      },
+      orderBy: { lastModified: 'desc' },
+    });
   }
 }

@@ -32,6 +32,14 @@ export class CasesController {
     return this.casesService.getRenovaciones(req.user.userId, accountId);
   }
 
+  @Get('check-duplicate')
+  async checkDuplicateCase(
+    @Query('accountId') accountId: string,
+    @Query('ramo') ramo: string,
+  ) {
+    return this.casesService.checkDuplicateCase(accountId, ramo);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.casesService.findOne(id);
